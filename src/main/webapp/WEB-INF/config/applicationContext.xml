@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.2.xsd">
+    <context:annotation-config/>
+    <context:component-scan base-package="com.sist.*"/>
+    <tx:annotation-driven proxy-target-class="true"/>
+    <!-- <tx:advice>
+       <tx:attributes>
+         <tx:method name="init"/> 
+       </tx:attributes>
+    </tx:advice> -->
+    <!-- 
+         @Bofore  ==> conn.setAutoCommit(false)
+         try
+         {
+                              핵심
+              INSERT
+              INSERT
+              UPDATE
+            conn.commit() => @Around
+         }catch(Exception ex)
+         {
+            conn.rollback() => @AfterThrowing (error)
+         }
+         finally
+         {
+             conn.setAutoCommit(true) => @After
+         }
+         return; => @AfterReturning (return값)
+    
+     -->
+    <util:properties id="db" location="/WEB-INF/config/db.properties"/>
+    <bean id="ds"
+        class="org.apache.commons.dbcp.BasicDataSource"
+        p:driverClassName="#{db['driver']}"
+        p:url="#{db['url']}"
+        p:username="#{db['username']}"
+        p:password="#{db['password']}"
+    />
+    <!-- transaction 관리자  -->
+    <bean id="transactionManager"
+       class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+       p:dataSource-ref="ds"
+    />
+    <bean id="ssf"
+       class="org.mybatis.spring.SqlSessionFactoryBean"
+       p:dataSource-ref="ds"
+    />
+    <bean id="mapper"
+       class="org.mybatis.spring.mapper.MapperFactoryBean"
+       p:sqlSessionFactory-ref="ssf"
+       p:mapperInterface="com.sist.data.dao.DataBoardMapper"
+    />
+    <bean id="viewResolver"
+       class="org.springframework.web.servlet.view.UrlBasedViewResolver"
+       p:requestContextAttribute="requestContext"
+       p:viewClass="org.springframework.web.servlet.view.tiles2.TilesView"
+    />
+    <bean id="tilesConfigurer"
+      class="org.springframework.web.servlet.view.tiles2.TilesConfigurer"
+      p:definitions="/WEB-INF/tiles.xml"
+    />
+    <bean id="multipartResolver"
+      class="org.springframework.web.multipart.commons.CommonsMultipartResolver"
+    />
+    <!-- <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
+    <property name="messageConverters">
+        <list>
+            <bean class="org.springframework.http.converter.StringHttpMessageConverter">
+                <property name="supportedMediaTypes">
+                    <list>
+                        <value>text/html;charset=EUC-KR</value>
+                    </list>
+                </property>
+            </bean>
+        </list>
+    </property>
+  </bean> -->
+    
+</beans>
